@@ -8,6 +8,10 @@ import matplotlib.pyplot as plt
 class TrajectoryGenerator():
 
     def __init__(self, waypoints, headings):
+        '''
+        waypoints: 3xn waypoints int 3D space
+        headings: 1xn heading setpoints for each keypoint
+        '''
         assert waypoints.shape[0] == 3
         self.headings = headings.reshape((1,-1))
         assert waypoints.shape[1] == self.headings.shape[1]
@@ -18,6 +22,7 @@ class TrajectoryGenerator():
         self.kpsi = 2 # heading trajectory order
         self.m = waypoints.shape[1] - 1 # number of time intervals
         self.ts = 1.0 # unscaled length of time intervals
+        self.tf = self.m * self.ts
 
 
     def solve(self):
@@ -33,7 +38,6 @@ class TrajectoryGenerator():
         self.sigmas = [None, None, None, None]
 
         for i, (c, prog) in enumerate(zip(cs, progs)):
-            print(i)
             # solve mathematical program
             solver = SnoptSolver()
             result = solver.Solve(prog)
@@ -88,12 +92,43 @@ class TrajectoryGenerator():
             while interval >= self.sigmas[0].shape[1]:
                 interval -= 1
                 curr_ts += self.ts
-                # print('too long')
-            # self.sigmas[0][0, interval]
-            # if interval == 11:
-            #     import ipdb; ipdb.set_trace()
             traj = np.zeros(3)
             for i in range(3):
                 traj[i] = np.sum([(1/np.math.factorial(j))*curr_ts**j*self.sigmas[i][j+n-1, interval] for j in range(self.kr-(n-1))])
             return traj
-
+        
+    def eval_heading(self, t, n):
+        '''
+        Evaluates the nth derivative of the heading at time t
+        '''
+        interval = int(t / self.ts)
+        curr_ts = t % self.ts
+        HEADING_IDX = 3
+        
+        if n == 0:
+            if np.allclose(curr_ts, 0.0):
+                return self.headings[:,interval]
+            else:
+                deriv = np.sum([(1/np.math.factorial(j))*curr_ts**j*self.sigmas[HEADING_IDX][j-1, interval] for j in range(1,self.kpsi+1)]) 
+                return self.headings[:,interval] + deriv
+        else:
+            while interval >= self.sigmas[0].shape[1]:
+                interval -= 1
+                curr_ts += self.ts
+            heading_der = np.sum([(1/np.math.factorial(j))*curr_ts**j*self.sigmas[HEADING_IDX][j+n-1, interval] for j in range(self.kpsi-(n-1))])
+            return heading_der
+        
+    def eval_full_trajectory(self, t):
+        '''
+        Returns a 4 x (max(kr, kpsi)+1) array with increasing derivative degrees of 
+        x, y, z, and psi at each column, representing the full trajectory at time t
+        '''
+        trajectory = np.zeros((4, max(self.kr, self.kpsi)) + 1)
+        for n in range(self.kr+1):
+            trajectory[:3, n] = self.eval_trajectory(t, n)
+        
+        for n in range(self.kpsi+1):
+            trajectory[3, n] = self.eval_heading(t, n)
+            
+        return trajectory
+        
