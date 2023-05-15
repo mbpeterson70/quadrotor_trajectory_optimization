@@ -123,7 +123,7 @@ class TrajectoryGenerator():
         Returns a 4 x (max(kr, kpsi)+1) array with increasing derivative degrees of 
         x, y, z, and psi at each column, representing the full trajectory at time t
         '''
-        trajectory = np.zeros((4, max(self.kr, self.kpsi)) + 1)
+        trajectory = np.zeros((4, max(self.kr, self.kpsi) + 1))
         for n in range(self.kr+1):
             trajectory[:3, n] = self.eval_trajectory(t, n)
         
