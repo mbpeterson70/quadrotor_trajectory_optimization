@@ -1,6 +1,9 @@
 from pydrake.all import (
     MathematicalProgram,
     SnoptSolver,
+    PointCloud,
+    BaseField,
+    Fields
 )
 import numpy as np
 import matplotlib.pyplot as plt
@@ -26,6 +29,9 @@ class TrajectoryOptimization():
 
 
     def solve(self):
+        '''
+        Run solver
+        '''
         prog_x, c_x = self._setup_solver(self.kr, self.waypoints[0,:])
         prog_y, c_y = self._setup_solver(self.kr, self.waypoints[1,:])
         prog_z, c_z = self._setup_solver(self.kr, self.waypoints[2,:])
@@ -34,11 +40,10 @@ class TrajectoryOptimization():
         cs = [c_x, c_y, c_z, c_psi]
         progs = [prog_x, prog_y, prog_z, prog_psi]
         self.sigma_x, self.sigma_y, self.sigma_z, self.sigma_psi = None, None, None, None
-        # sigmas = [self.sigma_x, self.sigma_y, self.sigma_z, self.sigma_psi]
         self.sigmas = [None, None, None, None]
 
+        # solve mathematical program for each axis
         for i, (c, prog) in enumerate(zip(cs, progs)):
-            # solve mathematical program
             solver = SnoptSolver()
             result = solver.Solve(prog)
 
@@ -49,6 +54,9 @@ class TrajectoryOptimization():
             self.sigmas[i] = result.GetSolution(c)
 
     def _setup_solver(self, k, keyframes):
+        '''
+        Set up mathematical program, constraints, etc.
+        '''
         # initialize optimization
         prog = MathematicalProgram()
 
@@ -66,7 +74,6 @@ class TrajectoryOptimization():
 
         for j in range(self.m-1):
             for i in range(k-1):
-        #         prog.AddConstraint(sigma[(i+1)*n+k] == np.sum([(1/np.math.factorial(j))*ts**j*sigma[i*n+k+j] for j in range(n-k)]))
                 prog.AddConstraint(c[i, j+1] == np.sum([(1/np.math.factorial(i2))*self.ts**i2*c[i+i2, j] for i2 in range(k-i)]))
 
         prog.AddCost(c[k-1,:] @ np.eye(self.m) @ c[k-1,:])
@@ -132,3 +139,42 @@ class TrajectoryOptimization():
             
         return trajectory
         
+    def get_trajectory_point_cloud(self, t):
+        '''
+        Returns point_cloud object of trajectory
+        '''
+        point_cloud = PointCloud(new_size=len(t), fields=Fields(BaseField.kXYZs))
+        cloud_array = point_cloud.mutable_xyzs()
+        for i, ti in enumerate(t):
+            cloud_array[:,i] = self.eval_trajectory(ti, 0)
+        return point_cloud
+
+    def get_keyframe_point_cloud(self, pts_per_edge, half_width):
+        '''
+        Returns point cloud object of keyframe visualization
+        '''
+        num_wp = self.waypoints.shape[1]
+        edges_per_shape = 12
+
+        waypoint_pt_cloud = PointCloud(new_size=num_wp*pts_per_edge*edges_per_shape, fields=Fields(BaseField.kXYZs))
+        wp_array = waypoint_pt_cloud.mutable_xyzs()
+
+        for i in range(self.waypoints.shape[1]):
+            wp_offset = i*pts_per_edge*edges_per_shape
+            j = 0
+            for ii in [-half_width, half_width]:
+                for jj in [-half_width, half_width]:
+                    for kk in np.linspace(-half_width, half_width, pts_per_edge):
+                        wp_array[:,wp_offset+j] = self.waypoints[:,i] + np.array([ii, jj, kk])
+                        j += 1
+            for ii in [-half_width, half_width]:
+                for jj in np.linspace(-half_width, half_width, pts_per_edge):
+                    for kk in [-half_width, half_width]:
+                        wp_array[:,wp_offset+j] = self.waypoints[:,i] + np.array([ii, jj, kk])
+                        j += 1
+            for ii in np.linspace(-half_width, half_width, pts_per_edge):
+                for jj in [-half_width, half_width]:
+                    for kk in [-half_width, half_width]:
+                        wp_array[:,wp_offset+j] = self.waypoints[:,i] + np.array([ii, jj, kk])
+                        j += 1
+        return waypoint_pt_cloud
