@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 class TrajectoryGenerator():
 
-    def __init__(self, waypoints, headings):
+    def __init__(self, waypoints, headings, ts=1.0):
         '''
         waypoints: 3xn waypoints int 3D space
         headings: 1xn heading setpoints for each keypoint
@@ -21,7 +21,7 @@ class TrajectoryGenerator():
         self.kr = 4 # R3 trajectory order
         self.kpsi = 2 # heading trajectory order
         self.m = waypoints.shape[1] - 1 # number of time intervals
-        self.ts = 1.0 # unscaled length of time intervals
+        self.ts = ts # 1.0 for unscaled length of time intervals
         self.tf = self.m * self.ts
 
 

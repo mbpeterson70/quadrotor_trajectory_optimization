@@ -4,16 +4,17 @@ from pydrake.all import (
 )
 import numpy as np
 import matplotlib.pyplot as plt
+
+import sys
+sys.path.append('..')
 from trajectory_generator import TrajectoryGenerator
 
 xs = np.array([
     0.0,
     2.0,
     5.0,
-    3.0,
     4.0,
-    -2.0,
-    -2.0,
+    -1.0,
     -2.0,
     0.0
 ])
@@ -47,4 +48,5 @@ axs[3].set_ylabel('jerk')
 axs[4].set_ylabel('snap')
 axs[4].set_xlabel('time (s)')
 
-plt.show()
+# plt.show()
+plt.savefig('./good_single_dim_traj.png')

@@ -1,3 +1,4 @@
+# Quadrotor Physical Parameters
 m_kg = 1.0
 L_m = 0.2
 Jxx = 0.017
@@ -8,3 +9,9 @@ J = [[Jxx, 0, 0],
      [0, 0, Jzz]]
 kF = 1.0
 kM = 1.0
+
+# Controller Gains
+
+# Visualization Params
+keyframes_pts_per_edge = 20
+keyframes_half_width = .2
