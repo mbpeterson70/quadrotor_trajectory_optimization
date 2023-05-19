@@ -5,7 +5,7 @@ from pydrake.all import (
 import numpy as np
 import matplotlib.pyplot as plt
 
-class TrajectoryGenerator():
+class TrajectoryOptimization():
 
     def __init__(self, waypoints, headings, ts=1.0):
         '''

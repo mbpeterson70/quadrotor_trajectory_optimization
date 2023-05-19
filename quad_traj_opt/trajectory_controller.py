@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.linalg import norm, inv
 from scipy.spatial.transform import Rotation as Rot
-from differential_flatness import trajectory_to_state
+from quad_traj_opt.differential_flatness import trajectory_to_state
 
 def update(trajectory, state, quadrotor, K_p, K_v, K_R, K_omega):
     # K_p = np.eye(3); K_v = np.eye(3)

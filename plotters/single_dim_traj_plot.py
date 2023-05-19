@@ -5,9 +5,7 @@ from pydrake.all import (
 import numpy as np
 import matplotlib.pyplot as plt
 
-import sys
-sys.path.append('..')
-from trajectory_generator import TrajectoryGenerator
+from min_snap_traj_opt.trajectory_generator import TrajectoryGenerator
 
 xs = np.array([
     0.0,
