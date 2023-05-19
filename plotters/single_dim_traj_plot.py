@@ -46,5 +46,4 @@ axs[3].set_ylabel('jerk')
 axs[4].set_ylabel('snap')
 axs[4].set_xlabel('time (s)')
 
-# plt.show()
-plt.savefig('./good_single_dim_traj.png')
+plt.show()
